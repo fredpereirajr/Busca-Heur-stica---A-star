@@ -207,8 +207,8 @@ public class AstarSistemasInteligentes {
 
 
 
-     //   matriz.graphTraverse();
-     //   matriz.print();
+        matriz.graphTraverse();
+        matriz.print();
 
 
     }
@@ -216,6 +216,7 @@ public class AstarSistemasInteligentes {
 
 class adjMatriz {
     private double [][] matriz;
+    private double [][] matrizheuristica;
     private int qtarestas;
     private int [] mark;
     private int qtvertices; 
@@ -239,7 +240,7 @@ class adjMatriz {
     }
 
     void push2 (int v, int u, double aresta){
-       /*SÓ PRA TIRAR O ERRO */
+        this.matrizheuristica[v][u] = aresta;
     }
 
     void print () {
@@ -259,6 +260,19 @@ class adjMatriz {
     }
 
     /*O método next retorna o indice que representa o próximo vértice ligado a v COMEÇANDO A BUSCA A PARTIR DE W(W REPRESENTA O INDICE DE UM VÉRTICE). */
+
+    int verificarFronteira(int v, double custoParcial) {
+        for (int i = 0; i <= this.qtvertices-1; i++) {
+            if (this.matriz[v][i] != 0) {
+                custoParcial =+ this.matriz[v][i];
+                double custoAparente = custoParcial + this.matrizheuristica[i][this.EF];
+                this.s.ordena(i, custoParcial, custoAparente);
+                
+            }
+        }
+        return qtvertices;
+
+    }
 
     int next(int v, int w) {
         for (int i = w + 1; i <= this.qtvertices-1; i++) {
@@ -308,30 +322,54 @@ class adjMatriz {
 
     }
 
+   
+
     void graphTraverse (){
 
-        for (int v = 0; v <= this.qtvertices - 1; v++) {
-            setMark(v, 0); /*0 significa que não foi visitado */          
-        }
+        this.s.inserir(this.EI, 0,0);
+        busca();
 
-        for (int v = 0; v <= this.qtvertices - 1; v++) {
-            if (getMark(v) == 0) {
-                dfs(v, this.s); /*Se o grafo não foi visitado chame o traverse(v), que neste caso pode ser DFS OU BFS...*/
+//        for (int v = 0; v <= this.qtvertices - 1; v++) {
+//            setMark(v, 0); /*0 significa que não foi visitado */          
+//        }
+
+
+        
+
+//        for (int v = 0; v <= this.qtvertices - 1; v++) {
+            /*O algoritmo só entra aqui uma única vez se existir um caminho de EI para EF.*/
+
+//            if (getMark(v) == 0) {
+//                dfs(v, this.s);
+                /*Se o grafo não foi visitado chame o traverse(v), que neste caso pode ser DFS OU BFS...*/
                 
                 
                 
-            }
+//            }
+//        }
+    }
+
+    void busca() {
+        int key = 0;
+        while (this.s.returnSize()!=0){
+            No EA = this.s.pop();   //EA = Estado atual.
+            if (EA.elemento == this.EF) key = 1;
+            if (key == 1) break;
+            verificarFronteira(EA.elemento, EA.custoG);
+
+
+
         }
     }
 
 
-
+/*
     void dfs(int v, Pilha s) {
         setMark(v, 1);
         int w = first(v);
         while (w <  this.qtvertices) {
             if (mark[w] == 0) {
-                dfs(w);  /*Vai mudar */
+                dfs(w);  
             }
             w =  next(v, w);
         }
@@ -341,16 +379,21 @@ class adjMatriz {
     }
 
 }
+*/
 
 class No {
     
     No next;
     int elemento;
+    double custoG; // Custo real acumulado
+    double custoAparente; // g+h, o custo que dita a ordenação do algoritmo
     
     
-    No createNos (int valor, No ponteiro) {
+    No createNos (int valor, double custo, double custoAparente, No ponteiro) {
         this.next = new No();
         this.next.elemento = valor;
+        this.next.custoG = custo;
+        this.next.custoAparente = custoAparente;
         this.next.next = ponteiro;            
         return this.next;
     }
@@ -365,31 +408,81 @@ class No {
 class Pilha {
    private No instanciaInicial;
    private No top;
+   private No tail;
    private int size;
 
     Pilha() {
         
         this.top = null;
+        this.tail = null;
         this.size = 0;
         this.instanciaInicial = new No();
 
     }
 
-    void inserir (int valor) {
+    void inserir (int valor, int custoReal, int custoAparente) {
         
-
-        this.top = this.instanciaInicial.createNos(valor, this.instanciaInicial.getProximo());
-        
+        this.top = this.instanciaInicial.createNos(valor,custoReal,custoAparente,this.instanciaInicial.getProximo());
+      
         this.size++;
     }
 
-    void pop () {
-        if(this.top == null) {
-            return;
+    void ordena (int valor, double custoReal, double custoAparente) {
+        No aux = this.top;
+        int key = 0;
+        if (this.size == 0) key = 2;
+        while (key == 0) {
+
+            if (aux != null) {
+
+                if (custoAparente <= aux.custoAparente) {
+                    aux = aux.createNos(valor,custoReal,custoAparente,aux.getProximo());  
+                
+                }else {
+
+                    aux = aux.next;
+
+                }
+
+                
+            }else { //Verificou TODOS e não achou nenhum menor.
+
+                this.tail.next = this.tail.createNos(valor,custoReal,custoAparente,null);
+                this.tail = this.tail.next;
+
+            }
+
+
+            
         }
 
+        if (key == 2) {
+
+            this.top = this.instanciaInicial.createNos(valor,custoReal,custoAparente,this.instanciaInicial.getProximo());  
+            this.tail = this.top.next;    
+            this.size++;
+            
+        }
+
+        
+
+    }
+
+    int returnSize () {
+        return this.size;
+    }
+
+
+    No pop () {
+    //    if(this.top == null) {
+    //        return;
+    //    }
+
+        No topo = this.top;
         this.top = this.top.next;
         this.size--;
+        return topo;
+
     }
 
     void print () {
