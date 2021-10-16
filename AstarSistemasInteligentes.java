@@ -1,45 +1,62 @@
 import java.util.Scanner;
+import java.util.*;
+import java.util.PriorityQueue;
 public class AstarSistemasInteligentes {
     public static void main(String[] args) {
         Scanner in = new Scanner (System.in);
-
+        System.out.println("Digite a estação inicial");
         String I = in.nextLine();  /*Pega a entrada do usuário no formato (estado inicial) =  E1,E2,E3,E4...E10, E11. */
+        System.out.println("Digite a estação de destino");
         String F = in.nextLine();  /*Pega a entrada do usuário no formato (estado final) =  E1,E2,E3,E4...E10, E11. */
         
         String EIaux [] = I.split("E");
         String EFaux [] = F.split("E");
+       
         int EI = Integer.parseInt(EIaux[1]);
         int EF = Integer.parseInt(EFaux[1]);
        
-       adjMatriz matriz = new adjMatriz().adjMatrizcreate(14, EI, EF);
+       adjMatriz matriz = new adjMatriz().adjMatrizcreate(14, EI-1, EF-1);
                           
                          /* LIGAÇÕES DE E1 */
 
         matriz.push(0, 1, 10);       /*E1 para E2 gastando 10   */   
+        matriz.pushRotaCor(0, 1, "Azul");
         
                          /* LIGAÇÕES DE E2 */
 
         matriz.push(1, 2, 8.5);      /*E2 para E3 gastando 8.5  */   
+        matriz.pushRotaCor(1, 2, "Azul");
         matriz.push(1, 8, 10);       /*E2 para E9 gastando 10   */  
+        matriz.pushRotaCor(1, 8, "Amarelo");
         matriz.push(1, 9, 3.5);      /*E2 para E10 gastando 3.5 */  
+        matriz.pushRotaCor(1, 9, "Amarelo");
 
                          /* LIGAÇÕES DE E3 */
 
         matriz.push(2, 3, 6.3);      /*E3 para E4 gastando 6.3  */   
+        matriz.pushRotaCor(2, 3, "Azul");
         matriz.push(2, 8, 9.4);      /*E3 para E9 gastando 9.4  */  
+        matriz.pushRotaCor(2, 8, "Vermelho");
         matriz.push(2, 12, 18.7);    /*E3 para E13 gastando 18.7*/  
+        matriz.pushRotaCor(2, 12, "Vermelho");
 
                          /* LIGAÇÕES DE E4 */
 
-        matriz.push(3, 4, 13);       /*E4 para E5 gastando 13   */   
-        matriz.push(3, 7, 15.3);     /*E4 para E8 gastando 15.3 */  
+        matriz.push(3, 4, 13);       /*E4 para E5 gastando 13   */  
+        matriz.pushRotaCor(3, 4, "Azul");
+        matriz.push(3, 7, 15.3);     /*E4 para E8 gastando 15.3 */ 
+        matriz.pushRotaCor(3, 7, "Verde"); 
         matriz.push(3, 12, 12.8);    /*E4 para E13 gastando 12.8*/ 
+        matriz.pushRotaCor(3, 12, "Verde");
 
                          /* LIGAÇÕES DE E5 */
 
         matriz.push(4, 5, 3);        /*E5 para E6 gastando 3    */   
-        matriz.push(4, 6, 2.4);      /*E5 para E7 gastando 2.4  */  
+        matriz.pushRotaCor(4, 5, "Azul");
+        matriz.push(4, 6, 2.4);      /*E5 para E7 gastando 2.4  */ 
+        matriz.pushRotaCor(4, 6, "Amarelo"); 
         matriz.push(4, 7, 30);       /*E5 para E8 gastando 30   */ 
+        matriz.pushRotaCor(4, 7, "Amarelo");
 
                          /* LIGAÇÕES DE E6 */
                 /*De E6 não vai para nenhuma estação */
@@ -50,11 +67,14 @@ public class AstarSistemasInteligentes {
                          /* LIGAÇÕES DE E8 */
 
         matriz.push(7, 8, 9.6);      /*E8 para E9 gastando 9.6  */   
+        matriz.pushRotaCor(7, 8, "Amarelo");
         matriz.push(7, 11, 6.4);     /*E8 para E12 gastando 6.4  */  
+        matriz.pushRotaCor(7, 11, "Verde");
 
                          /* LIGAÇÕES DE E9 */
 
-        matriz.push(8, 10, 12.2);    /*E9 para E11 gastando 12.2  */   
+        matriz.push(8, 10, 12.2);    /*E9 para E11 gastando 12.2  */ 
+        matriz.pushRotaCor(8, 10, "Vermelho");  
 
                          /* LIGAÇÕES DE E10 */
                 /*De E10 não vai para nenhuma estação */
@@ -68,6 +88,7 @@ public class AstarSistemasInteligentes {
                          /* LIGAÇÕES DE E13 */
 
         matriz.push(12, 13, 5.1);    /*E13 para E14 gastando 5.1  */  
+        matriz.pushRotaCor(12, 13, "Verde");
 
                          /* LIGAÇÕES DE E12 */
                 /*De E12 não vai para nenhuma estação */
@@ -203,35 +224,36 @@ public class AstarSistemasInteligentes {
    
         matriz.push2(12, 13, 5.1);  /*E13 para E14 gastando 33.6 */
 
-       
-
 
 
         matriz.graphTraverse();
-        matriz.print();
-
+       
 
     }
 }
 
+   
 class adjMatriz {
     private double [][] matriz;
+    public String [][] rotaCor;
     private double [][] matrizheuristica;
-    private int qtarestas;
+    public PriorityQueue <No> minHeap;
     private int [] mark;
     private int qtvertices; 
     public int EI;
     public int EF;
-    private Pilha s;
+    public double custoTotal;
 
     adjMatriz adjMatrizcreate (int n, int EI, int EF) {  /*Criar matriz que relaciona custo real */
         this.EI = EI;  /*Marcando estado inicial */
         this.EF = EF;  /* Marcando estado final */
+        this.minHeap = new PriorityQueue<>(14);
         this.mark =  new int [n];
         this.matriz =  new double [n][n];
-        this.qtarestas = 0;
+        this.matrizheuristica =  new double [n][n];
+        this.rotaCor = new String [n][n];
         this.qtvertices = n;
-        this.s = new Pilha();
+        this.custoTotal = 0;
         return this;
     }
 
@@ -239,258 +261,169 @@ class adjMatriz {
         this.matriz[v][u] = aresta;
     }
 
+
+    void pushRotaCor (int v, int u, String CorRota) {
+        this.rotaCor [v] [u] = CorRota;
+        this.rotaCor [u] [v] = CorRota;
+    }
+
     void push2 (int v, int u, double aresta){
         this.matrizheuristica[v][u] = aresta;
     }
 
-    void print () {
-        s.print();
-    }
 
-    /*O método first retorna o indice que representa o primeiro vértice ligado a v(indice que representa o vértice passado como parâmetro.) */
-
-    int first (int v) {
-        for (int i = 0; i <= this.qtvertices - 1; i++) {
-            if (this.matriz[v][i]!=0) {
-                return i;
-            }
-        }
-
-        return this.qtvertices;
-    }
-
-    /*O método next retorna o indice que representa o próximo vértice ligado a v COMEÇANDO A BUSCA A PARTIR DE W(W REPRESENTA O INDICE DE UM VÉRTICE). */
-
-    int verificarFronteira(int v, double custoParcial) {
+    void verificarFronteira(No EA) {
         for (int i = 0; i <= this.qtvertices-1; i++) {
-            if (this.matriz[v][i] != 0) {
-                custoParcial =+ this.matriz[v][i];
-                double custoAparente = custoParcial + this.matrizheuristica[i][this.EF];
-                this.s.ordena(i, custoParcial, custoAparente);
+
+            if (i == 0) {
+                System.out.print("E"+(EA.elemento+1)+": ");
+            }
+            
+           
+           
+            if (this.matriz[EA.elemento][i] != 0 || this.matriz[i][EA.elemento]!=0) {
                 
+                System.out.print("E"+(i+1)+" ");
+                double custoParcial = 0;  
+                double custoAparente = 0; 
+                double heuristica = 0;
+                double auxCustoParcial = 0;
+                String rota = this.rotaCor[EA.elemento][i];
+                
+                /*Calculando custo real parcial...*/
+                if (this.matriz[EA.elemento][i] != 0) {
+                    auxCustoParcial = (this.matriz[EA.elemento][i]/30)*60;
+                    custoParcial = EA.custoG + auxCustoParcial; 
+                   
+                }else {
+                    auxCustoParcial = (this.matriz[i][EA.elemento]/30)*60; 
+                    custoParcial = EA.custoG + auxCustoParcial;  
+                    
+                }
+
+                /*Calculando Baldeação */
+                if (EA.rotaAtual != rota && EA.rotaAtual!="X") {
+                    custoParcial = custoParcial + 4;
+                }
+                
+                /*Calculando heurística*/
+                if ( this.matrizheuristica[i][this.EF] == 0 ) {
+                    heuristica = (this.matrizheuristica[this.EF][i]/30)*60;
+                    custoAparente = custoParcial + heuristica; 
+                }else {
+                    heuristica = (this.matrizheuristica[i][this.EF]/30)*60;
+                    custoAparente = custoParcial + heuristica;  
+                }
+      
+                No candidato = new No(i,EA.elemento, custoParcial, custoAparente, rota);  
+                candidato.inicializeCaminho();
+                candidato.pushcaminho(EA);
+                /*Atualizando caminho para o No candidato, usando como referencia o caminho
+                registrado do nó anterior/atual/queTaSendoExpandido (EA)*/
+                this.minHeap.add(candidato);  
+                  
+            }
+
+            if (i == 13) {
+                System.out.println(" ");
             }
         }
-        return qtvertices;
-
     }
-
-    int next(int v, int w) {
-        for (int i = w + 1; i <= this.qtvertices-1; i++) {
-            if (this.matriz[v][i] != 0) {
-                return i;
-            }
-        }
-        return qtvertices;
-
-    }
-
-    /*O método set Edge altera o status da aresta entre 2 vértices. */
-
-    void setEdge(int i, int j, int wt) {
-        if (wt == 0) {
-            /*Não pode, pq eu nao sei.*/
-            /*Retorne error*/
-            return;
-        }
-
-        if (this.matriz[i][j] == 0) {
-            this.qtarestas++;
-            this.matriz[i][j] = wt;
-            /*Lembre-se que 0 denota ausência de aresta entre dois vértices */
-        }
-
-    }
-
-    void delEdge(int i, int j, int wt) {
-        if (this.matriz[i][j] != 0) {
-            this.qtarestas--;
-            this.matriz[i][j] = 0;
-            /*Lembre-se que 0 denota ausência de aresta entre dois vértices */
-        }
-
-    }
-
-    /*As funções setMark e getMark faz referencia ao array mark. setMark seta todas as posições do array para 0, o que significa que nenhum vertice foi visitado. e getMark retorna o status de visita de um vértice. */
-
-    public void setMark(int v, int visitado) {
-        this.mark [v] = visitado;
-        /* 0 denota não visitado. */
-    }
-
-    public int getMark(int v) {
-        return this.mark[v];
-
-    }
-
-   
 
     void graphTraverse (){
 
-        this.s.inserir(this.EI, 0,0);
-        busca();
+       
 
-//        for (int v = 0; v <= this.qtvertices - 1; v++) {
-//            setMark(v, 0); /*0 significa que não foi visitado */          
-//        }
-
-
+        No candidatoInicial = new No(this.EI, this.EI, 0, 0,"X");
+        candidatoInicial.inicializeCaminho();
+        candidatoInicial.pushcaminhoRESTRICAO(this.EI);
+        this.minHeap.add(candidatoInicial);
+       
+        while (!this.minHeap.isEmpty()){
+            No EA = this.minHeap.remove();   
+            
+           
+                if (EA.elemento == this.EF) {
+                    this.custoTotal = EA.custoG;   
+                    int aux  = 0;
+                    while (aux < 14) {
+                        if (EA.caminho[aux] == -1) {
+                            break;
+                        }else {
+                            System.out.println(EA.caminho[aux]+1);
+                        }
+                        aux++;
+                    }   
+                    System.out.println("CUSTO: "+ this.custoTotal+" minutos");
+                    break;      
+                }
+                verificarFronteira(EA);
+            
         
-
-//        for (int v = 0; v <= this.qtvertices - 1; v++) {
-            /*O algoritmo só entra aqui uma única vez se existir um caminho de EI para EF.*/
-
-//            if (getMark(v) == 0) {
-//                dfs(v, this.s);
-                /*Se o grafo não foi visitado chame o traverse(v), que neste caso pode ser DFS OU BFS...*/
-                
-                
-                
-//            }
-//        }
-    }
-
-    void busca() {
-        int key = 0;
-        while (this.s.returnSize()!=0){
-            No EA = this.s.pop();   //EA = Estado atual.
-            if (EA.elemento == this.EF) key = 1;
-            if (key == 1) break;
-            verificarFronteira(EA.elemento, EA.custoG);
-
-
-
-        }
-    }
-
-
-/*
-    void dfs(int v, Pilha s) {
-        setMark(v, 1);
-        int w = first(v);
-        while (w <  this.qtvertices) {
-            if (mark[w] == 0) {
-                dfs(w);  
-            }
-            w =  next(v, w);
         }
 
-        s.inserir(v);
-        
+       
     }
+
+  
 
 }
-*/
 
-class No {
+class No implements Comparable<No>{
     
-    No next;
     int elemento;
     double custoG; // Custo real acumulado
     double custoAparente; // g+h, o custo que dita a ordenação do algoritmo
-    
-    
-    No createNos (int valor, double custo, double custoAparente, No ponteiro) {
-        this.next = new No();
-        this.next.elemento = valor;
-        this.next.custoG = custo;
-        this.next.custoAparente = custoAparente;
-        this.next.next = ponteiro;            
-        return this.next;
-    }
-    
-    No getProximo () {
-        return this.next;
-    }
-    
-    
-}
+    String rotaAtual;
+    int caminho[];
+   
 
-class Pilha {
-   private No instanciaInicial;
-   private No top;
-   private No tail;
-   private int size;
+    public No (int verticeAtual, int verticeAnterior, double custoG, double custoAparente, String rotaAtual) {
 
-    Pilha() {
-        
-        this.top = null;
-        this.tail = null;
-        this.size = 0;
-        this.instanciaInicial = new No();
+        this.elemento = verticeAtual;
+        this.custoG = custoG;
+        this.custoAparente = custoAparente;
+        this.rotaAtual = rotaAtual;
+        this.caminho = new int [14];
+       
+    }
+
+    void inicializeCaminho () {
+
+        for (int i = 0; i < 14; i++) {
+            this.caminho [i] = -1; 
+        }
 
     }
 
-    void inserir (int valor, int custoReal, int custoAparente) {
-        
-        this.top = this.instanciaInicial.createNos(valor,custoReal,custoAparente,this.instanciaInicial.getProximo());
-      
-        this.size++;
-    }
-
-    void ordena (int valor, double custoReal, double custoAparente) {
-        No aux = this.top;
-        int key = 0;
-        if (this.size == 0) key = 2;
-        while (key == 0) {
-
-            if (aux != null) {
-
-                if (custoAparente <= aux.custoAparente) {
-                    aux = aux.createNos(valor,custoReal,custoAparente,aux.getProximo());  
-                
-                }else {
-
-                    aux = aux.next;
-
-                }
-
-                
-            }else { //Verificou TODOS e não achou nenhum menor.
-
-                this.tail.next = this.tail.createNos(valor,custoReal,custoAparente,null);
-                this.tail = this.tail.next;
-
+    void pushcaminho (No NoAnterior) {
+        int sizeCaminho = 0;
+        for (int i = 0; i < caminho.length; i++) {
+            if (NoAnterior.caminho[i] != -1) {
+                this.caminho[i] = NoAnterior.caminho[i];
+                sizeCaminho++;
             }
-
-
-            
         }
 
-        if (key == 2) {
-
-            this.top = this.instanciaInicial.createNos(valor,custoReal,custoAparente,this.instanciaInicial.getProximo());  
-            this.tail = this.top.next;    
-            this.size++;
-            
-        }
-
-        
+        this.caminho[sizeCaminho] = this.elemento;
 
     }
 
-    int returnSize () {
-        return this.size;
+    void pushcaminhoRESTRICAO (int EI) {
+       this.caminho[0] = EI;
     }
 
-
-    No pop () {
-    //    if(this.top == null) {
-    //        return;
-    //    }
-
-        No topo = this.top;
-        this.top = this.top.next;
-        this.size--;
-        return topo;
-
+    public double getCustoAparente() {
+        return custoAparente;
     }
 
-    void print () {
-        No aux = this.top;
-        for (int i = 0; i < this.size; i++) {
-            System.out.println(aux.elemento);
-            aux = aux.next;
+    public int compareTo(No no) {
+        if(this.getCustoAparente() > no.getCustoAparente()) {
+            return 1;
+        } else if (this.getCustoAparente() < no.getCustoAparente()) {
+            return -1;
+        } else {
+            return 0;
         }
     }
 }
-
